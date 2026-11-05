@@ -22,3 +22,18 @@ type UpdateEndpointRequest struct {
     RateLimit  int       `json:"rate_limit"`
     RefillRate float64   `json:"refill_rate"`
 }
+
+
+type CreateDestinationRequest struct {
+    EndpointID uuid.UUID `json:"endpoint_id"`
+    URL        string    `json:"url"`
+    Weight     int       `json:"weight"`
+}
+
+type UpdateDestinationRequest struct {
+    ID         uuid.UUID `json:"id"`
+    EndpointID uuid.UUID `json:"endpoint_id"`
+    URL        string    `json:"url"`
+    Weight     int       `json:"weight"`
+    IsActive   bool      `json:"is_active"`
+}

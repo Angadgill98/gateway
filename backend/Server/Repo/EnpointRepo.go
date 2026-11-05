@@ -55,3 +55,20 @@ func (*EndpointRepo) UpdateEndpoint(db *pgxpool.Pool, id uuid.UUID, route string
 
     return err
 }
+
+
+func (*EndpointRepo) RegisterDestinationID(db *pgxpool.Pool, endpointID uuid.UUID, destinationID uuid.UUID) error {
+    query, values := BuildUpdateQuery(
+        "endpoint",
+        map[string]any{
+            "destination_ids": destinationID,
+        },
+        map[string][]any{
+            "id": {"=", endpointID},
+        },
+    )
+
+    _, err := db.Exec(context.Background(), query, values...)
+
+    return err
+}

@@ -14,6 +14,7 @@ import (
 type Repo struct{
 	AppRepo *AppRepo
 	EndpointRepo *EndpointRepo
+    DestinationRepo *DestinationRepo
 	Rdb *redis.Client
 	Db *pgxpool.Pool
 }
@@ -22,6 +23,7 @@ func CreateRepo(db *pgxpool.Pool,rdb *redis.Client)*Repo{
 	return &Repo{
 		AppRepo: CreateApprepo(),
 		EndpointRepo: CreateEndpointRepo(),
+        DestinationRepo: CreateDestinationRepo(),
 		Db: db,
 		Rdb: rdb,
 	}

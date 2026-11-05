@@ -15,7 +15,7 @@ import (
 type Handlers struct{
 	AppHandlers *AppHandler
     EndpointHandler *EndpointHandler
-
+    DestinationHandler *DestinationHandler
     Services *services.Services
     Repo *repo.Repo
     Db *pgxpool.Pool
@@ -29,6 +29,7 @@ func CreateHandlers()*Handlers{
 	return &Handlers{
 		AppHandlers: CreateAppHandler(Service,Repo),
         EndpointHandler: CreateEndpointHandler(Service,Repo),
+        DestinationHandler: CreateDestinationHandler(Service,Repo),
         Services: Service,
         Repo: Repo,
         Db: Db,
