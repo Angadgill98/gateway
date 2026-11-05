@@ -1,0 +1,27 @@
+sudo systemctl status redis-server
+
+redis-cli ping
+
+redis-cli
+
+sudo systemctl start redis-server
+
+sudo systemctl stop redis-server
+
+sudo systemctl restart redis-server
+
+redis-cli CLIENT LIST
+
+tiny-rdm
+
+
+
+
+sudo -u postgres psql
+
+
+
+
+
+tusk
+tusk --new-window

@@ -61,3 +61,28 @@ func (*AppRepo) GetAppById(db *pgxpool.Pool, appID uuid.UUID) (App, error) {
 
     return app, err
 }
+
+func (*AppRepo) GetAllApps(db *pgxpool.Pool) ([]App, error) {
+    query, values := BuildSelectQuery("app", []string{"id", "name", "endpoint_ids", "rate_limit", "refill_rate"}, nil)
+
+    rows, err := db.Query(context.Background(), query, values...)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    apps := make([]App, 0)
+
+    for rows.Next() {
+        var app App
+
+        err := rows.Scan(&app.ID, &app.Name, &app.EndpointIDs, &app.RateLimit, &app.RefillRate)
+        if err != nil {
+            return nil, err
+        }
+
+        apps = append(apps, app)
+    }
+
+    return apps, rows.Err()
+}

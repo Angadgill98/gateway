@@ -40,14 +40,19 @@ type Response struct {
     Message string `json:"message"`
     Data    any    `json:"data,omitempty"`
 }
+func WriteResponse(w http.ResponseWriter, status int, success bool, message string, data ...any) {
+    var responseData any
 
-func WriteResponse(w http.ResponseWriter, status int, success bool, message string, data any) {
+    if len(data) > 0 {
+        responseData = data[0]
+    }
+
     w.Header().Set("Content-Type", "application/json")
     w.WriteHeader(status)
 
     json.NewEncoder(w).Encode(Response{
         Success: success,
         Message: message,
-        Data:    data,
+        Data:    responseData,
     })
 }

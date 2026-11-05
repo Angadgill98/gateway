@@ -3,7 +3,7 @@ package handlers
 import (
 	repo "gateway/Server/Repo"
 	services "gateway/Server/Services"
-	"net/http"
+	// "net/http"
 )
 
 
@@ -24,7 +24,7 @@ func CreateEndpointHandler(services *services.Services, repo *repo.Repo) *Endpoi
 
 
 
-func (h *EndpointHandler) RegisterEndpoint(w http.ResponseWriter, req *http.Request){
-	h.Repo.EndpointRepo.CreateEndpoint()
-	h.Repo.AppRepo.RegisterEndpoint()
-}
+// func (h *EndpointHandler) RegisterEndpoint(w http.ResponseWriter, req *http.Request){
+// 	h.Repo.EndpointRepo.CreateEndpoint()
+// 	h.Repo.AppRepo.RegisterEndpoint()
+// }

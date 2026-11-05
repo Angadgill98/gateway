@@ -7,4 +7,5 @@ type App struct {
     Name        string      `json:"name"`
     EndpointIDs []uuid.UUID `json:"endpoint_ids"`
     RateLimit   int         `json:"rate_limit"`
+    RefillRate  float64     `json:"refill_rate"`
 }

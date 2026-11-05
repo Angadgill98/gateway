@@ -1,6 +1,11 @@
 package server
 
-import "net/http"
+import (
+	routes "gateway/Server/Routes"
+	"net/http"
+
+	"github.com/rs/cors"
+)
 
 
 
@@ -23,8 +28,14 @@ func Initialize(addr string) *Server {
 }
 
 
-func (server *Server) StartServer(){
-	server.httpServer.ListenAndServe()
+func (server *Server) StartServer() {
+    routes.RegisterRoutes(server.mux)
+
+    corsHandler := cors.AllowAll()
+
+    server.httpServer.Handler = corsHandler.Handler(server.mux)
+
+    server.httpServer.ListenAndServe()
 }
 
 

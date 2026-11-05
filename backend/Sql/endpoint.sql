@@ -1,7 +1,8 @@
-CREATE TABLE endpoint (
+CREATE TABLE IF NOT EXISTS endpoint (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     app_id UUID NOT NULL REFERENCES app(id) ON DELETE CASCADE,
     route VARCHAR(255) NOT NULL,
     url TEXT NOT NULL,
-    rate_limit INTEGER
+    rate_limit INTEGER DEFAULT 100,
+    refill_rate DOUBLE PRECISION DEFAULT 10.0
 ); 

@@ -1,6 +1,9 @@
 package routes
 
-import "net/http"
+import (
+	handlers "gateway/Server/Handlers"
+	"net/http"
+)
 
 
 
@@ -9,5 +12,6 @@ import "net/http"
 
 
 func RegisterRoutes(mux *http.ServeMux){
-	
+	handlers:=handlers.CreateHandlers()
+	RegisterAppRoutes(mux,handlers)
 }
