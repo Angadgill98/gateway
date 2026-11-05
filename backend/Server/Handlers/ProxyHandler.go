@@ -24,8 +24,11 @@ func CreateProxyHandler(services *services.Services, repo *repo.Repo) *ProxyHand
 
 
 
-func (h *ProxyHandler) RegisterEndpoint(w http.ResponseWriter, req *http.Request){
-	// h.Repo.EndpointRepo.CreateEndpoint()
-	// h.Repo.AppRepo.RegisterEndpoint()
+func (h *ProxyHandler) ProxyReqProcessing(w http.ResponseWriter, req *http.Request){
+	// req_info,err:=h.Services.ProxyService.ExtractReqInfo(req)
+
+
+
+	// h.Services.ProxyService.ForwardRequest(w,req,req_info.)
 }
 

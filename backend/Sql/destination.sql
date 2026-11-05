@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS endpoint_destination (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    endpoint_id UUID NOT NULL REFERENCES endpoint(id) ON DELETE CASCADE,
+    url TEXT NOT NULL,
+    weight INTEGER NOT NULL DEFAULT 1,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+);

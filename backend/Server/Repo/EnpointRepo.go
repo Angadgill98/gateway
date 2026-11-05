@@ -1,49 +1,57 @@
 package repo
 
 import (
-	"context"
+    "context"
 
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
+    "github.com/google/uuid"
+    "github.com/jackc/pgx/v5/pgxpool"
 )
 
+type EndpointRepo struct{}
 
-type EndpointRepo struct{
-
+func CreateEndpointRepo() *EndpointRepo {
+    return &EndpointRepo{}
 }
 
-
-func CreateEndpointRepo()*EndpointRepo{
-	return &EndpointRepo{
-	}
-}
-
-
-func (*EndpointRepo) CreateEndpoint(db *pgxpool.Pool, route string, url string, rate_limiting int, app_id uuid.UUID) (uuid.UUID, error) {
+func (*EndpointRepo) CreateEndpoint(db *pgxpool.Pool, route string, rate_limiting int, refill_rate float64, app_id uuid.UUID) (uuid.UUID, error) {
     query, values := BuildInsertQuery("endpoint", map[string]any{
-        "route":      route,
-        "url":        url,
-        "rate_limit": rate_limiting,
-        "app_id":     app_id,
+        "route":       route,
+        "rate_limit":  rate_limiting,
+        "refill_rate": refill_rate,
+        "app_id":      app_id,
     }, []string{"id"})
 
     var id uuid.UUID
-
     err := db.QueryRow(context.Background(), query, values...).Scan(&id)
 
     return id, err
 }
 
-func (*EndpointRepo) GetEndpoint_AppId(db *pgxpool.Pool, route string, url string) (uuid.UUID, uuid.UUID, error) {
+func (*EndpointRepo) GetEndpoint_AppId(db *pgxpool.Pool, route string, app_id uuid.UUID) (uuid.UUID, uuid.UUID, error) {
     query, values := BuildSelectQuery("endpoint", []string{"id", "app_id"}, map[string][]any{
-        "route": {"=", route},
-        "url":   {"=", url},
+        "route":  {"=", route},
+        "app_id": {"=", app_id},
     })
 
     var id uuid.UUID
-    var app_id uuid.UUID
+    var appID uuid.UUID
 
-    err := db.QueryRow(context.Background(), query, values...).Scan(&id, &app_id)
+    err := db.QueryRow(context.Background(), query, values...).Scan(&id, &appID)
 
-    return id, app_id, err
+    return id, appID, err
+}
+
+func (*EndpointRepo) UpdateEndpoint(db *pgxpool.Pool, id uuid.UUID, route string, rate_limiting int, refill_rate float64, app_id uuid.UUID) error {
+    query, values := BuildUpdateQuery("endpoint", map[string]any{
+        "route":       route,
+        "rate_limit":  rate_limiting,
+        "refill_rate": refill_rate,
+        "app_id":      app_id,
+    }, map[string][]any{
+        "id": {"=", id},
+    })
+
+    _, err := db.Exec(context.Background(), query, values...)
+
+    return err
 }

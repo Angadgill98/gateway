@@ -3,11 +3,11 @@ package services
 
 
 type Services struct{
-	AppService *ProxyService
+	ProxyService *ProxyService
 }
 
 func CreateService()*Services{
 	return &Services{
-		AppService: CreateProxyService(),
+		ProxyService: CreateProxyService(),
 	}
 }

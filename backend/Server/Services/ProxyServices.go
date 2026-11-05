@@ -3,6 +3,8 @@ package services
 import (
 	"io"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 )
 
 
@@ -16,16 +18,17 @@ func CreateProxyService() *ProxyService{
 }
 
 type ProxyRequestInfo struct {
-    Method  string
-    Host    string
-    Path    string
-    Query   string
-    Headers http.Header
-    Body    []byte
+    Method     string
+    Host       string
+    Path       string
+    Query      string
+    Headers    http.Header
+    Cookies    []*http.Cookie
+    Body       []byte
     RemoteAddr string
 }
 
-func ExtractReqInfo(r *http.Request) (*ProxyRequestInfo, error) {
+func (*ProxyService)ExtractReqInfo(r *http.Request) (*ProxyRequestInfo, error) {
     var body []byte
 
     if r.Body != nil {
@@ -42,6 +45,7 @@ func ExtractReqInfo(r *http.Request) (*ProxyRequestInfo, error) {
         Path:       r.URL.Path,
         Query:      r.URL.RawQuery,
         Headers:    r.Header,
+        Cookies:    r.Cookies(),
         Body:       body,
         RemoteAddr: r.RemoteAddr,
     }, nil
@@ -54,7 +58,34 @@ type ProxyResponseInfo struct {
     Body       []byte
 }
 
-func ExtractProxyRes(res *http.Response) (*ProxyResponseInfo, error) {
+func (s *ProxyService) ForwardRequest(w http.ResponseWriter, req *http.Request, destination string) {
+    target, err := url.Parse(destination)
+    if err != nil {
+        http.Error(w, "Invalid destination URL", http.StatusBadRequest)
+        return
+    }
+
+    proxy := &httputil.ReverseProxy{
+        Rewrite: func(pr *httputil.ProxyRequest) {
+            pr.SetURL(target)
+        },
+
+        ModifyResponse: func(res *http.Response) error {
+            // TODO: Execute response callback here.
+            // You can inspect or modify the response before sending it.
+
+            return nil
+        },
+
+        ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
+            http.Error(w, "Proxy request failed", http.StatusBadGateway)
+        },
+    }
+
+    proxy.ServeHTTP(w, req)
+}
+
+func (*ProxyService)ExtractProxyRes(res *http.Response) (*ProxyResponseInfo, error) {
     defer res.Body.Close()
 
     body, err := io.ReadAll(res.Body)
