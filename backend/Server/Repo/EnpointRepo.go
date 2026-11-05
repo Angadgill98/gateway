@@ -27,18 +27,31 @@ func (*EndpointRepo) CreateEndpoint(db *pgxpool.Pool, route string, rate_limitin
     return id, err
 }
 
-func (*EndpointRepo) GetEndpoint_AppId(db *pgxpool.Pool, route string, app_id uuid.UUID) (uuid.UUID, uuid.UUID, error) {
-    query, values := BuildSelectQuery("endpoint", []string{"id", "app_id"}, map[string][]any{
+func (*EndpointRepo) GetEndpoint_AppId(db *pgxpool.Pool, route string, app_id uuid.UUID) (Endpoint, error) {
+    query, values := BuildSelectQuery("endpoint", []string{
+        "id",
+        "app_id",
+        "route",
+        "destination_ids",
+        "rate_limit",
+        "refill_rate",
+    }, map[string][]any{
         "route":  {"=", route},
         "app_id": {"=", app_id},
     })
 
-    var id uuid.UUID
-    var appID uuid.UUID
+    var endpoint Endpoint
 
-    err := db.QueryRow(context.Background(), query, values...).Scan(&id, &appID)
+    err := db.QueryRow(context.Background(), query, values...).Scan(
+        &endpoint.ID,
+        &endpoint.AppID,
+        &endpoint.Route,
+        &endpoint.DestinationIDs,
+        &endpoint.RateLimit,
+        &endpoint.RefillRate,
+    )
 
-    return id, appID, err
+    return endpoint, err
 }
 
 func (*EndpointRepo) UpdateEndpoint(db *pgxpool.Pool, id uuid.UUID, route string, rate_limiting int, refill_rate float64, app_id uuid.UUID) error {

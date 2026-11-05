@@ -1,10 +1,17 @@
 package services
 
 import (
+	"errors"
+	"fmt"
+	repo "gateway/Server/Repo"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
+
+	"github.com/google/uuid"
 )
 
 
@@ -100,3 +107,103 @@ func (*ProxyService)ExtractProxyRes(res *http.Response) (*ProxyResponseInfo, err
     }, nil
 }
 
+func (s *ProxyService) GetReqAndClientMetaD(info *ProxyRequestInfo) (string, string, string, error) {
+    parts := strings.SplitN(strings.Trim(info.Path, "/"), "/", 2)
+
+    if len(parts) != 2 {
+        return "", "", "", fmt.Errorf("invalid request path")
+    }
+
+    appName := parts[0]
+    endpoint := "/" + parts[1]
+
+    clientIP, _, err := net.SplitHostPort(info.RemoteAddr)
+    if err != nil {
+        clientIP = info.RemoteAddr
+    }
+
+    return appName, endpoint, clientIP, nil
+}
+
+func (s *ProxyService) CreateAppBucketKey(app_name string) string {
+    return repo.ProjectName + ":rate_limit:app:" + app_name
+}
+
+func (s *ProxyService) CreateEndpointBucketKey(app_name string, endpoint string) string {
+    return repo.ProjectName + ":rate_limit:endpoint:" + app_name + ":" + endpoint
+}
+
+func (s *ProxyService) CreateClientBucketKey(app_name string, client_ip string) string {
+    return repo.ProjectName + ":rate_limit:client:" + app_name + ":" + client_ip
+}
+
+func (s *ProxyService) CreateDestinationHashKey(appName string, endpoint string) string {
+    return repo.ProjectName + ":app:" + appName + ":endpoint:" + endpoint + ":destinations"
+}
+
+
+func (s *ProxyService) HandleRateLimitResult(result int64, app_name string, route string, repo *repo.Repo) (bool, string) {
+    switch result {
+    case 0:
+        return true, "Request allowed"
+
+    case 1:
+        return false, "Application rate limit exceeded"
+
+    case 2:
+        return false, "Endpoint rate limit exceeded"
+    }
+
+    // Handle missing buckets.
+    app, err := repo.AppRepo.GetAppByName(repo.Db, app_name)
+    if err != nil {
+        return false, "Failed to retrieve application"
+    }
+
+    switch result {
+    case 3:
+        err = repo.RateLimitingRepo.InitializeApplicationBucket(app_name,app.RateLimit-1, app.RateLimit, app.RefillRate, repo.Rdb)
+        if err != nil {
+            return false, "Failed to initialize application bucket"
+        }
+
+        return true, "Application bucket initialized"
+
+    case 4:
+        endpoint, err := repo.EndpointRepo.GetEndpoint_AppId(repo.Db, route, app.ID)
+        if err != nil {
+            return false, "Failed to retrieve endpoint"
+        }
+
+        err = repo.RateLimitingRepo.InitializeEndpointBucket(app_name, route, app.RateLimit-1, endpoint.RateLimit, endpoint.RefillRate, repo.Rdb)
+        if err != nil {
+            return false, "Failed to initialize endpoint bucket"
+        }
+
+        return true , "Endpoint bucket initialized"
+
+    default:
+        return false, "Unknown rate limit result"
+    }
+}
+
+
+func (h *ProxyService) GetDestination(destinations []repo.Destination, destinationKey string) (repo.Destination, error) {
+    var destination repo.Destination
+
+    for i := range destinations {
+        if !destinations[i].IsActive || destinations[i].Weight <= 0 {
+            continue
+        }
+
+        if destination.ID == uuid.Nil || destinations[i].Weight > destination.Weight {
+            destination = destinations[i]
+        }
+    }
+
+    if destination.ID == uuid.Nil {
+        return destination, errors.New("no active destinations available")
+    }
+
+    return destination, nil
+}

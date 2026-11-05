@@ -8,13 +8,14 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-
+var ProjectName="gateway"
 
 
 type Repo struct{
 	AppRepo *AppRepo
 	EndpointRepo *EndpointRepo
     DestinationRepo *DestinationRepo
+    RateLimitingRepo *RateLimitingRepo
 	Rdb *redis.Client
 	Db *pgxpool.Pool
 }
@@ -24,6 +25,7 @@ func CreateRepo(db *pgxpool.Pool,rdb *redis.Client)*Repo{
 		AppRepo: CreateApprepo(),
 		EndpointRepo: CreateEndpointRepo(),
         DestinationRepo: CreateDestinationRepo(),
+        RateLimitingRepo:CreateRateLimitingRepo(),
 		Db: db,
 		Rdb: rdb,
 	}

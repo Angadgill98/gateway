@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -17,12 +16,12 @@ func CreateRateLimitingRepo() *RateLimitingRepo {
     return &RateLimitingRepo{}
 }
 
+//reoved the clietn chcekign , cahnged 3 to 2 in both loop 
 var rateLimitScript = redis.NewScript(`
     local now = tonumber(ARGV[1])
     local buckets = {}
 
-    -- Phase 1: Refill and check all three buckets.
-    for i = 1, 3 do
+    for i = 1, 2 do
         local key = KEYS[i]
 
         local data = redis.call(
@@ -35,7 +34,7 @@ var rateLimitScript = redis.NewScript(`
         )
 
         if not data[1] or not data[2] or not data[3] or not data[4] then
-            return redis.error_reply("Rate limit bucket not initialized")
+            return i + 2
         end
 
         local tokens = tonumber(data[1])
@@ -52,37 +51,66 @@ var rateLimitScript = redis.NewScript(`
             tokens = tokens
         }
 
-        -- Save the refilled balance.
         redis.call("HSET", key, "tokens", tokens, "last_refill", now)
 
-        -- Stop at the first bucket that cannot allow the request.
         if tokens < 1 then
             return i
         end
     end
 
-    -- Phase 2: All buckets passed. Consume one token from each.
-    for i = 1, 3 do
+    for i = 1, 2 do
         redis.call("HSET", buckets[i].key, "tokens", buckets[i].tokens - 1)
     end
 
     return 0
 `)
 
-func CheckRateLimit(appKey string, endpointKey string, clientKey string, rdb *redis.Client) (int64, error) {
+func (*RateLimitingRepo)CheckRateLimit(appKey string, endpointKey string, clientKey string, rdb *redis.Client) (int64, error) {
     return rateLimitScript.Run(context.Background(), rdb, []string{appKey, endpointKey, clientKey}, time.Now().UnixMilli()).Int64()
 }
-// Return   Value	Meaning
-// 0		All three buckets allowed the request
-// 1		Application limit exceeded
-// 2		Endpoint limit exceeded
-// 3		Client limit exceeded
+// Return value	Meaning
+// 0	All buckets allowed
+// 1	Application limit exceeded
+// 2	Endpoint limit exceeded
+// 3	Client limit exceeded //removed for now
+// 4	Application bucket missing
+// 5	Endpoint bucket missing
+// 6	Client bucket missing //removed for now 
 
-func InitializeApplicationBucket(application_id uuid.UUID, limit int, refill_rate float64, rdb *redis.Client) error {
-    key := "rate_limit:app:" + application_id.String()
+// Return	Meaning
+// 0	Request allowed
+// 1	Application limit exceeded
+// 2	Endpoint limit exceeded
+// 3	Application bucket missing
+// 4	Endpoint bucket missing
+
+func (*RateLimitingRepo) InitializeApplicationBucket(app_name string, token int, limit int, refill_rate float64, rdb *redis.Client) error {
+    key := ProjectName + ":" + app_name + ":rate_limit"
 
     return rdb.HSet(context.Background(), key, map[string]any{
-        "tokens":      limit,
+        "tokens":      token,
+        "limit":       limit,
+        "refill_rate": refill_rate,
+        "last_refill": time.Now().UnixMilli(),
+    }).Err()
+}
+
+func (*RateLimitingRepo) InitializeEndpointBucket(app_name string, endpoint string, token int, limit int, refill_rate float64, rdb *redis.Client) error {
+    key := ProjectName + ":" + app_name + ":" + endpoint + ":rate_limit"
+
+    return rdb.HSet(context.Background(), key, map[string]any{
+        "tokens":      token,
+        "limit":       limit,
+        "refill_rate": refill_rate,
+        "last_refill": time.Now().UnixMilli(),
+    }).Err()
+}
+
+func (*RateLimitingRepo) InitializeClientBucket(app_name string, client_ip string, token int, limit int, refill_rate float64, rdb *redis.Client) error {
+    key := ProjectName + ":" + app_name + ":" + client_ip + ":rate_limit"
+
+    return rdb.HSet(context.Background(), key, map[string]any{
+        "tokens":      token,
         "limit":       limit,
         "refill_rate": refill_rate,
         "last_refill": time.Now().UnixMilli(),
