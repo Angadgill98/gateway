@@ -9,7 +9,7 @@ export interface Endpoint {
     id: string;
     app_id: string;
     route: string;
-    url: string;
+    destination_ids: string[];
     rate_limit: number;
     refill_rate: number;
 }

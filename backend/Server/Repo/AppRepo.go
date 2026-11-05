@@ -34,18 +34,13 @@ func (*AppRepo) CreateApp(db *pgxpool.Pool, name string) (uuid.UUID, error) {
 }
 
 func (*AppRepo) RegisterEndpoint(db *pgxpool.Pool, appID uuid.UUID, endpointID uuid.UUID) error {
-    query, values := BuildUpdateQuery(
-        "app",
-        map[string]any{
-            "endpoint_id": endpointID,
-        },
-        map[string][]any{
-            "id": {"=", appID},
-        },
-    )
+    query := `
+        UPDATE app
+        SET endpoint_ids = array_append(endpoint_ids, $1)
+        WHERE id = $2
+    `
 
-    _, err := db.Exec(context.Background(), query, values...)
-
+    _, err := db.Exec(context.Background(), query, endpointID, appID)
     return err
 }
 

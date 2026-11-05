@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS endpoint_destination (
+CREATE TABLE IF NOT EXISTS destination (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     endpoint_id UUID NOT NULL REFERENCES endpoint(id) ON DELETE CASCADE,
     url TEXT NOT NULL,

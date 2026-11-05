@@ -9,9 +9,8 @@ type RegisterAppRequest struct {
 type RegisterEndpointRequest struct {
     AppID      uuid.UUID `json:"app_id"`
     Route      string    `json:"route"`
-    URL        string    `json:"url"`
-    RateLimit  int       `json:"rate_limit"`
-    RefillRate float64   `json:"refill_rate"`
+    // RateLimit  int       `json:"rate_limit"`
+    // RefillRate float64   `json:"refill_rate"`
 }
 
 type UpdateEndpointRequest struct {
