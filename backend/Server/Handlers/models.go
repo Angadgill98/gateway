@@ -32,6 +32,8 @@ type CreateDestinationRequest struct {
 type UpdateDestinationRequest struct {
     ID         uuid.UUID `json:"id"`
     EndpointID uuid.UUID `json:"endpoint_id"`
+    AppName    string    `json:"app_name"`
+    Route      string    `json:"route"`
     URL        string    `json:"url"`
     Weight     int       `json:"weight"`
     IsActive   bool      `json:"is_active"`

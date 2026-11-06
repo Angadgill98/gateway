@@ -18,10 +18,11 @@ func CreateDestinationRepo() *DestinationRepo {
 }
 
 func (*DestinationRepo) CreateDestination(db *pgxpool.Pool, endpointID uuid.UUID, url string, weight int) (uuid.UUID, error) {
-    query, values := BuildInsertQuery("endpoint_destination", map[string]any{
+    query, values := BuildInsertQuery("destination", map[string]any{
         "endpoint_id": endpointID,
         "url":         url,
         "weight":      weight,
+        "is_active":   false,
     }, []string{"id"})
 
     var id uuid.UUID
@@ -31,7 +32,7 @@ func (*DestinationRepo) CreateDestination(db *pgxpool.Pool, endpointID uuid.UUID
 }
 
 func (*DestinationRepo) UpdateDestination(db *pgxpool.Pool, id uuid.UUID, endpointID uuid.UUID, url string, weight int, isActive bool) error {
-    query, values := BuildUpdateQuery("endpoint_destination", map[string]any{
+    query, values := BuildUpdateQuery("destination", map[string]any{
         "endpoint_id": endpointID,
         "url":         url,
         "weight":      weight,
@@ -45,8 +46,8 @@ func (*DestinationRepo) UpdateDestination(db *pgxpool.Pool, id uuid.UUID, endpoi
     return err
 }
 
-func (*DestinationRepo) GetDestinationsByEndpointID(db *pgxpool.Pool, endpointID uuid.UUID) ([]Destination, error) {
-    query, values := BuildSelectQuery("endpoint_destination", []string{
+func (*DestinationRepo) GetAllDestinationsByEndpointID(db *pgxpool.Pool, endpointID uuid.UUID) ([]Destination, error) {
+    query, values := BuildSelectQuery("destination", []string{
         "id",
         "endpoint_id",
         "url",
@@ -198,4 +199,31 @@ func (*DestinationRepo) GetProxyReqDestination_RDM(rdb *redis.Client, destinatio
     }
 
     return destination, true, nil
+}
+
+func (*DestinationRepo) UpdateDestinationActive_RDB(rdb *redis.Client, destination_key string, destinationID uuid.UUID, isActive bool) error {
+    ctx := context.Background()
+
+    data, err := rdb.HGet(ctx, destination_key, destinationID.String()).Result()
+    if err == redis.Nil {
+        return nil
+    }
+    if err != nil {
+        return err
+    }
+
+    var destination map[string]any
+
+    if err := json.Unmarshal([]byte(data), &destination); err != nil {
+        return err
+    }
+
+    destination["is_active"] = isActive
+
+    updatedData, err := json.Marshal(destination)
+    if err != nil {
+        return err
+    }
+
+    return rdb.HSet(ctx, destination_key, destinationID.String(), string(updatedData)).Err()
 }

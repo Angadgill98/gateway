@@ -10,12 +10,11 @@ import (
 
 
 func RegisterDestinationRoutes(mux *http.ServeMux,handler *handlers.Handlers){
-	app_mux:=http.NewServeMux()
 
-	app_mux.HandleFunc("/create-destination",handler.DestinationHandler.CreateDestination)
+	mux.HandleFunc("/create-destination",handler.DestinationHandler.CreateDestination)
 
-	app_mux.HandleFunc("/update-destination", handler.DestinationHandler.UpdateDestination)
+	mux.HandleFunc("/update-destination", handler.DestinationHandler.UpdateDestination)
 
-	mux.Handle("/api/", http.StripPrefix("/api", app_mux))
+	mux.HandleFunc("/get-all-destinations", handler.DestinationHandler.GetAllDestinations)
 }
 

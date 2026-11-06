@@ -18,6 +18,7 @@ func RegisterRoutes(mux *http.ServeMux) {
 
     RegisterAppRoutes(api_mux, handlers)
     RegisterEndpointRoutes(api_mux, handlers)
+	RegisterDestinationRoutes(api_mux,handlers)
 
     mux.Handle("/api/", http.StripPrefix("/api", api_mux))
 }

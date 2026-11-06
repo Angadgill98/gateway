@@ -74,7 +74,7 @@ func (h *ProxyHandler) ProxyReqProcessing(w http.ResponseWriter, req *http.Reque
 			return
 		}
 
-		destinations, err := h.Repo.DestinationRepo.GetDestinationsByEndpointID(h.Repo.Db, endpointData.ID)
+		destinations, err := h.Repo.DestinationRepo.GetAllDestinationsByEndpointID(h.Repo.Db, endpointData.ID)
 		if err != nil {
 			WriteResponse(w, http.StatusInternalServerError, false, "Failed to retrieve destinations")
 			return
